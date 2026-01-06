@@ -222,15 +222,19 @@ class _Button extends StatelessWidget {
     child = GestureDetector(
       excludeFromSemantics: true,
       onTap: () {
-        final isFinal = pageController.page == widget.colors.length - 1;
-        if (isFinal && widget.onFinish != null) {
-          widget.onFinish!();
-          return;
+        final pageIndex = pageController.page?.round() ?? 0;
+        final pagesCount = widget.itemCount ?? widget.colors.length;
+
+        if (pageIndex % pagesCount == pagesCount - 1) {
+          if (widget.onFinish != null) {
+            widget.onFinish!();
+          }
+        } else {
+          pageController.nextPage(
+            duration: widget.duration,
+            curve: widget.curve,
+          );
         }
-        pageController.nextPage(
-          duration: widget.duration,
-          curve: widget.curve,
-        );
       },
       child: DecoratedBox(
         decoration: const BoxDecoration(shape: BoxShape.circle),
