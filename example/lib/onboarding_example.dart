@@ -31,6 +31,15 @@ class OnboardingExample extends StatelessWidget {
       body: ConcentricPageView(
         colors: pages.map((p) => p.bgColor).toList(),
         radius: screenWidth * 0.1,
+        itemCount: pages.length,
+        onFinish: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Onboarding finished!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
         // curve: Curves.ease,
         nextButtonBuilder: (context) => Padding(
           padding: const EdgeInsets.only(left: 3), // visual center
@@ -39,13 +48,11 @@ class OnboardingExample extends StatelessWidget {
             size: screenWidth * 0.08,
           ),
         ),
-        // itemCount: pages.length,
         // duration: const Duration(milliseconds: 1500),
         // opacityFactor: 2.0,
         // scaleFactor: 0.2,
         // verticalPosition: 0.7,
         // direction: Axis.vertical,
-        // itemCount: pages.length,
         // physics: NeverScrollableScrollPhysics(),
         itemBuilder: (index) {
           final page = pages[index % pages.length];

@@ -99,56 +99,74 @@ class _ConcentricPageViewState extends State<ConcentricPageView> {
   }
 
   Widget _buildPageView() {
-    return PageView.builder(
-      key: widget.pageViewKey,
-      scrollBehavior: ScrollConfiguration.of(context).copyWith(
-        scrollbars: false,
-        overscroll: false,
-        dragDevices: {
-          PointerDeviceKind.touch,
-          PointerDeviceKind.mouse,
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification notification) {
+        // Check if we have a finite itemCount and onFinish callback
+        if (widget.itemCount != null && widget.onFinish != null) {
+          final currentPage = _pageController.page?.round() ?? 0;
+          final lastPage = widget.itemCount! - 1;
+
+          // Detect overscroll on the last page
+          if (notification is OverscrollNotification && currentPage == lastPage) {
+            // Check if overscrolling forward (past the last page)
+            if (notification.overscroll > 0) {
+              widget.onFinish!();
+              return true;
+            }
+          }
+        }
+        return false;
+      },
+      child: PageView.builder(
+        key: widget.pageViewKey,
+        scrollBehavior: ScrollConfiguration.of(context).copyWith(
+          scrollbars: false,
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        clipBehavior: Clip.none,
+        scrollDirection: widget.direction,
+        controller: _pageController,
+        reverse: widget.reverse,
+        physics: widget.physics,
+        itemCount: widget.itemCount,
+        pageSnapping: widget.pageSnapping,
+        onPageChanged: (int page) {
+          if (widget.onChange != null) {
+            widget.onChange!(page);
+          }
+        },
+        itemBuilder: (context, index) {
+          final child = widget.itemBuilder(index);
+          if (!_pageController.position.hasContentDimensions) {
+            return child;
+          }
+          return AnimatedBuilder(
+            animation: _pageController,
+            builder: (context, child) {
+              final progress = _pageController.page! - index;
+              if (widget.opacityFactor != 0) {
+                child = Opacity(
+                  opacity: (1 - (progress.abs() * widget.opacityFactor))
+                      .clamp(0.0, 1.0),
+                  child: child,
+                );
+              }
+              if (widget.scaleFactor != 0) {
+                child = Transform.scale(
+                  scale:
+                      (1 - (progress.abs() * widget.scaleFactor)).clamp(0.0, 1.0),
+                  child: child,
+                );
+              }
+              return child!;
+            },
+            child: child,
+          );
         },
       ),
-      clipBehavior: Clip.none,
-      scrollDirection: widget.direction,
-      controller: _pageController,
-      reverse: widget.reverse,
-      physics: widget.physics,
-      itemCount: widget.itemCount,
-      pageSnapping: widget.pageSnapping,
-      onPageChanged: (int page) {
-        if (widget.onChange != null) {
-          widget.onChange!(page);
-        }
-      },
-      itemBuilder: (context, index) {
-        final child = widget.itemBuilder(index);
-        if (!_pageController.position.hasContentDimensions) {
-          return child;
-        }
-        return AnimatedBuilder(
-          animation: _pageController,
-          builder: (context, child) {
-            final progress = _pageController.page! - index;
-            if (widget.opacityFactor != 0) {
-              child = Opacity(
-                opacity: (1 - (progress.abs() * widget.opacityFactor))
-                    .clamp(0.0, 1.0),
-                child: child,
-              );
-            }
-            if (widget.scaleFactor != 0) {
-              child = Transform.scale(
-                scale:
-                    (1 - (progress.abs() * widget.scaleFactor)).clamp(0.0, 1.0),
-                child: child,
-              );
-            }
-            return child!;
-          },
-          child: child,
-        );
-      },
     );
   }
 
